@@ -214,7 +214,6 @@ def load_converter_data(multi_chain=False):
             # Import and run converter discovery
             import converter_discovery
             import time
-            import os
             
             # Choose chains based on multi_chain parameter
             if multi_chain:

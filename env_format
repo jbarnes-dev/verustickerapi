@@ -4,6 +4,8 @@
 # =============================================================================
 # Enable live endpoints (set to false for production)
 ENABLE_LIVE_ENDPOINTS=fasle
+# Set Base URL for deployment
+BASE_URL=
 
 # =============================================================================
 # RPC CONNECTION SETTINGS
