@@ -743,7 +743,6 @@ CHIPS_MIN_NATIVE_TOKENS=20000</div>
                 <h3>✅ Data Validation & Consistency</h3>
                 <p><strong>Pair Count Validation:</strong> All endpoints return exactly 57 trading pairs with consistent data</p>
                 <p><strong>Cross-Endpoint Validation:</strong> All cached endpoints return identical data to their original counterparts</p>
-                <p><strong>Validation Endpoint:</strong> <code>/validate</code> endpoint confirms perfect data integrity across all endpoints</p>
                 <p><strong>Block Height Consistency:</strong> All endpoints use the same blockchain block height for data consistency</p>
             </div>
 
@@ -771,7 +770,7 @@ CHIPS_MIN_NATIVE_TOKENS=20000</div>
                 <h4>📊 Price Aggregation Method</h4>
                 <p><strong>Quote Volume Weighting:</strong> When the same trading pair exists across multiple converters, the final <code>last_price</code> is calculated using volume-weighted averaging with <strong>quote volume</strong> as the weight. This ensures that higher dollar-value trades have more influence on the final price.</p>
                 <p><strong>Formula:</strong> <code>weighted_price = (price1 × quote_vol1 + price2 × quote_vol2) / (quote_vol1 + quote_vol2)</code></p>
-                <p><strong>Applied to:</strong> /coinmarketcap, /coinmarketcap_cache, /coinmarketcap_iaddress, /coinmarketcap_iaddress_cache, /coinpaprika, /coinpaprika_cache</p>
+                <p><strong>Applied to:</strong> /coinmarketcap, /coinmarketcap_iaddress, /coinpaprika</p>
             </div>
 
 
