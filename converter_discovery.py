@@ -4,7 +4,6 @@ Converter Discovery Module
 Discovers all active converters while respecting exclusion rules
 """
 
-import os
 import json
 from verus_rpc import make_rpc_call
 from dict import get_ticker_by_id, get_min_native_tokens
@@ -440,6 +439,7 @@ def save_converter_discovery(discovery_result, filename=None):
     try:
         # Use relative path if no filename provided
         if filename is None:
+            import os
             filename = os.path.join(os.path.dirname(__file__), 'converter_discovery.json')
         
         with open(filename, 'w') as f:
