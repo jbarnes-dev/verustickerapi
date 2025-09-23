@@ -20,23 +20,52 @@ from block_height import get_session_block_height
 
 logger = logging.getLogger(__name__)
 
+# Session-based cache for VRSC USD price (like API_v8)
+_vrsc_usd_cache = {}
+
 def get_vrsc_usd_price_cached():
     """
-    Get VRSC to USD price using DAI estimation
-    Uses session-based caching for consistency
+    Get VRSC to USD price using vETH conversion via NATI🦉 + ETH price
+    Uses session-based caching for consistency (same pattern as API_v8)
     """
     try:
-        # Use estimateconversion to get VRSC to DAI.vETH rate via Bridge.vETH
-        conversion_params = {'currency': 'VRSC', 'convertto': 'DAI.vETH', 'amount': 1, 'via': 'Bridge.vETH'}
+        # Get current session ID for caching
+        session_id = get_session_block_height()
+        
+        # Check if we have cached price for this session
+        if session_id in _vrsc_usd_cache:
+            logger.info(f"Using cached VRSC USD price for session {session_id}: ${_vrsc_usd_cache[session_id]}")
+            return _vrsc_usd_cache[session_id]
+        
+        # Step 1: Convert VRSC to vETH via NATI🦉
+        conversion_params = {'currency': 'VRSC', 'convertto': 'vETH', 'amount': 1, 'via': 'NATI🦉'}
         result = make_rpc_call('VRSC', 'estimateconversion', [conversion_params])
         
-        if result and 'estimatedcurrencyout' in result:
-            vrsc_dai_rate = float(result['estimatedcurrencyout'])
-            # DAI.vETH should be close to 1 USD, but get live rate if possible
-            # For now, use the DAI rate directly as USD approximation
-            return vrsc_dai_rate
+        if not result or 'estimatedcurrencyout' not in result:
+            return 0.0
+            
+        vrsc_veth_rate = float(result['estimatedcurrencyout'])
         
-        return 0.0
+        # Step 2: Get ETH price with fallback (import from currency_price_cache)
+        try:
+            from currency_price_cache import get_eth_price_with_fallback
+            eth_usd_price = get_eth_price_with_fallback()
+        except ImportError:
+            # Fallback if import fails
+            eth_usd_price = 0.0
+        
+        if eth_usd_price <= 0:
+            return 0.0
+            
+        # Step 3: Calculate VRSC USD price
+        vrsc_usd_price = vrsc_veth_rate * eth_usd_price
+        
+        # Cache the result for this session
+        _vrsc_usd_cache[session_id] = vrsc_usd_price
+        logger.info(f"Cached VRSC USD price for session {session_id}: ${vrsc_usd_price}")
+        
+        return vrsc_usd_price
+        
     except Exception as e:
         logger.error(f"Error getting VRSC→USD price: {e}")
         return 0.0

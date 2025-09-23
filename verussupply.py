@@ -99,6 +99,14 @@ async def get_vrsc_supply():
     Get VRSC supply information including total supply, VRSC in converters, and circulating supply
     Caches complete response for 10 minutes to reduce external API calls and file I/O
     """
+    # Pause background refresh for 3 minutes when this endpoint is called
+    try:
+        from cache_manager import get_cache_manager
+        cache_manager = get_cache_manager()
+        cache_manager.pause_refresh_for_verussupply()
+    except Exception as e:
+        logger.warning(f"Failed to pause background refresh: {e}")
+    
     # Check cache first
     if _is_supply_response_cache_valid():
         cache_age = time.time() - _supply_response_cache['timestamp']
@@ -111,14 +119,21 @@ async def get_vrsc_supply():
         from verus_rpc import make_rpc_call
         from cache_manager import get_cache_manager
         
-        # Method 1: Try external Verus API for total supply
+        # Method 1: Try external Verus API for total supply using coinsupply
         total_supply = None
         try:
-            logger.info("Attempting external Verus API...")
+            logger.info("Attempting external Verus API (coinsupply)...")
             import requests
             
-            api_url = "https://api.verus.services/verus/getcurrency/VRSC"
-            response = requests.get(api_url, timeout=10)
+            api_url = "https://api.verus.services"
+            payload = {
+                "method": "coinsupply",
+                "params": [],
+                "id": 1
+            }
+            headers = {"Content-Type": "application/json"}
+            
+            response = requests.post(api_url, json=payload, headers=headers, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -126,147 +141,35 @@ async def get_vrsc_supply():
                     total_supply = float(data['result']['supply'])
                     logger.info(f"✅ Got total supply from external API: {total_supply:,.2f} VRSC")
                 else:
-                    logger.warning("External API response missing supply field")
+                    logger.warning(f"External API response missing supply field: {data}")
             else:
                 logger.warning(f"External API returned status {response.status_code}")
                 
         except Exception as e:
             logger.warning(f"External API failed: {e}")
         
-        # Method 2: Try getblockchaininfo for moneysupply
-        if total_supply is None:
-            try:
-                logger.info("Attempting getblockchaininfo RPC call...")
-                result = make_rpc_call('VRSC', 'getblockchaininfo', [])
-                logger.info(f"getblockchaininfo result keys: {list(result.keys()) if result else 'None'}")
-                if result and 'moneysupply' in result:
-                    total_supply = float(result['moneysupply'])
-                    logger.info(f"Found moneysupply: {total_supply}")
-                elif result and 'valuepools' in result:
-                    logger.info(f"Found valuepools: {result['valuepools']}")
-                else:
-                    logger.warning(f"No moneysupply field in getblockchaininfo")
-            except Exception as e:
-                logger.warning(f"Failed to get moneysupply from getblockchaininfo: {e}")
-        
-        # Method 2: Try getcurrency for VRSC
-        if total_supply is None:
-            try:
-                logger.info("Attempting getcurrency VRSC RPC call...")
-                result = make_rpc_call('VRSC', 'getcurrency', ['VRSC'])
-                logger.info(f"getcurrency VRSC result: {result}")
-                if result and 'supply' in result:
-                    total_supply = float(result['supply'])
-                    logger.info(f"Found supply: {total_supply}")
-                else:
-                    logger.warning(f"No supply field in getcurrency result: {result}")
-            except Exception as e:
-                logger.warning(f"Failed to get supply from getcurrency: {e}")
-        
-        # Method 3: Try coinsupply RPC call (correct format from docs)
-        if total_supply is None:
-            try:
-                logger.info("Attempting coinsupply RPC call without height...")
-                result = make_rpc_call('VRSC', 'coinsupply', [])
-                print(f"DEBUG: coinsupply result: {result}")
-                logger.info(f"coinsupply result keys: {list(result.keys()) if result else 'None'}")
-                if result and 'total' in result:
-                    total_supply = float(result['total'])
-                    logger.info(f"Found total supply: {total_supply}")
-                    print(f"DEBUG: Found total supply: {total_supply}")
-                elif result and 'supply' in result:
-                    total_supply = float(result['supply'])
-                    logger.info(f"Found transparent supply: {total_supply}")
-                    print(f"DEBUG: Found transparent supply: {total_supply}")
-                else:
-                    logger.warning(f"Unexpected coinsupply result format: {result}")
-            except Exception as e:
-                print(f"DEBUG: coinsupply failed: {e}")
-                logger.warning(f"Failed to get supply from coinsupply: {e}")
-        
-        # Method 3b: Try coinsupply with explicit current height
-        if total_supply is None:
-            try:
-                logger.info("Getting current block height for coinsupply...")
-                block_result = make_rpc_call('VRSC', 'getblockcount', [])
-                print(f"DEBUG: getblockcount result: {block_result}")
-                if block_result and isinstance(block_result, int):
-                    current_height = block_result
-                    logger.info(f"Attempting coinsupply with height {current_height}...")
-                    result = make_rpc_call('VRSC', 'coinsupply', [current_height])
-                    print(f"DEBUG: coinsupply with height result: {result}")
-                    if result and 'total' in result:
-                        total_supply = float(result['total'])
-                        logger.info(f"Found total supply with height: {total_supply}")
-                        print(f"DEBUG: Found total supply with height: {total_supply}")
-                    elif result and 'supply' in result:
-                        total_supply = float(result['supply'])
-                        logger.info(f"Found transparent supply with height: {total_supply}")
-                        print(f"DEBUG: Found transparent supply with height: {total_supply}")
-            except Exception as e:
-                print(f"DEBUG: coinsupply with height failed: {e}")
-                logger.warning(f"Failed to get supply from coinsupply with height: {e}")
-        
-        # Method 4: Try gettxoutsetinfo RPC call
+        # Method 2: Try gettxoutsetinfo RPC call (reliable fallback)
         if total_supply is None:
             try:
                 logger.info("Attempting gettxoutsetinfo RPC call...")
                 result = make_rpc_call('VRSC', 'gettxoutsetinfo', [])
-                logger.info(f"gettxoutsetinfo result: {result}")
                 if result and 'total_amount' in result:
                     total_supply = float(result['total_amount'])
-                    logger.info(f"Found total_amount: {total_supply}")
+                    logger.info(f"✅ Found total_amount from gettxoutsetinfo: {total_supply:,.2f}")
                 else:
-                    logger.warning(f"No total_amount field in gettxoutsetinfo result: {result}")
+                    logger.warning("No total_amount field in gettxoutsetinfo result")
             except Exception as e:
                 logger.warning(f"Failed to get supply from gettxoutsetinfo: {e}")
         
-        # Method 6: Try getting VRSC currency state from converter data
+        # Final fallback: Fail if all methods don't work
         if total_supply is None:
-            try:
-                logger.info("Attempting to get VRSC supply from getcurrencystate...")
-                result = make_rpc_call('VRSC', 'getcurrencystate', ['VRSC'])
-                logger.info(f"getcurrencystate VRSC result keys: {list(result.keys()) if result else 'None'}")
-                if result and 'supply' in result:
-                    total_supply = float(result['supply'])
-                    logger.info(f"Found supply in currencystate: {total_supply}")
-                elif result and 'currencystate' in result and 'supply' in result['currencystate']:
-                    total_supply = float(result['currencystate']['supply'])
-                    logger.info(f"Found supply in nested currencystate: {total_supply}")
-            except Exception as e:
-                logger.warning(f"Failed to get supply from getcurrencystate: {e}")
-        
-        # Method 7: Try listcurrencies to see available methods
-        if total_supply is None:
-            try:
-                logger.info("Attempting listcurrencies to debug available data...")
-                result = make_rpc_call('VRSC', 'listcurrencies', [])
-                if result and isinstance(result, list):
-                    for currency in result:
-                        if currency.get('currencyid') == 'i5w5MuNik5NtLcYmNzcvaoixooEebB6MGV' or currency.get('name') == 'VRSC':
-                            logger.info(f"Found VRSC currency data: {currency}")
-                            if 'supply' in currency:
-                                total_supply = float(currency['supply'])
-                                logger.info(f"Found supply in listcurrencies: {total_supply}")
-                                break
-            except Exception as e:
-                logger.warning(f"Failed to get supply from listcurrencies: {e}")
-        
-        # Method 8: Fail if RPC doesn't work - NO ESTIMATES
-        if total_supply is None:
-            # Log what RPC methods we tried for debugging
-            logger.error("All RPC methods failed to retrieve VRSC total supply:")
-            logger.error("- getinfo (moneysupply)")
-            logger.error("- getblockchaininfo (moneysupply)")
-            logger.error("- getcurrency VRSC (supply)")
-            logger.error("- coinsupply")
-            logger.error("- gettxoutsetinfo (total_amount)")
-            logger.error("- getcurrencystate VRSC (supply)")
-            logger.error("- listcurrencies (supply)")
+            logger.error("All supply methods failed:")
+            logger.error("- External API (coinsupply)")
+            logger.error("- Local gettxoutsetinfo")
             
             raise HTTPException(
                 status_code=503,
-                detail="Unable to retrieve VRSC total supply from RPC. All methods failed. No fallback estimates allowed."
+                detail="Unable to retrieve VRSC total supply. All methods failed."
             )
         
         # Get VRSC reserves from converters using dedicated function

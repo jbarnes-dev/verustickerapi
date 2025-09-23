@@ -45,6 +45,10 @@ class CacheManager:
         self.background_timer = None
         self.is_shutdown = False
         
+        # Verussupply pause mechanism
+        self.verussupply_pause_until = None
+        self.verussupply_pause_duration = 120  # 2 minutes in seconds
+        
         logger.info(f"🚀 Cache Manager initialized with {cache_ttl_seconds}s TTL")
         
         # Start background refresh if enabled
@@ -268,6 +272,27 @@ class CacheManager:
         initial_thread = threading.Thread(target=initial_refresh, daemon=True)
         initial_thread.start()
 
+    def pause_refresh_for_verussupply(self):
+        """
+        Pause background refresh for 3 minutes when verussupply endpoint is called
+        """
+        self.verussupply_pause_until = time.time() + self.verussupply_pause_duration
+        logger.info(f"⏸️  Background refresh paused for {self.verussupply_pause_duration}s due to verussupply call")
+    
+    def _is_paused_for_verussupply(self) -> bool:
+        """
+        Check if refresh is currently paused for verussupply
+        """
+        if self.verussupply_pause_until is None:
+            return False
+        
+        if time.time() < self.verussupply_pause_until:
+            return True
+        else:
+            # Clear the pause
+            self.verussupply_pause_until = None
+            return False
+    
     def _start_background_refresh(self):
         """
         Start the background refresh timer
@@ -284,6 +309,14 @@ class CacheManager:
         """
         try:
             if not self.is_shutdown:
+                # Check if paused for verussupply
+                if self._is_paused_for_verussupply():
+                    remaining = int(self.verussupply_pause_until - time.time())
+                    logger.info(f"⏸️  Background refresh skipped - paused for verussupply ({remaining}s remaining)")
+                    # Schedule next refresh
+                    self._start_background_refresh()
+                    return
+                
                 logger.info("⚡ Proactive cache refresh triggered by background timer")
                 
                 # Import here to avoid circular imports
