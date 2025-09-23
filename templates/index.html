@@ -1,7 +1,7 @@
 <!DOCTYPE html>
     <html>
     <head>
-        <title>Verus Ticker API - VRSC/vETH Trace Documentation</title>
+        <title>Verus Ticker API - Complete Endpoint Documentation</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
@@ -262,7 +262,7 @@
         <div class="container">
             <h1>🔍 Verus Ticker API</h1>
             <div class="subtitle">
-                <strong>Version:</strong> 2.0 | <strong>Status:</strong> <span class="status">✅ Active</span> | <strong>Base URL:</strong> {{ base_url }}<br>
+                <strong>Version:</strong> 2.0 | <strong>Status:</strong> <span class="status">✅ Active</span> | <strong>Base URL:</strong> {{base_url}}<br>
 
             </div>
 
@@ -273,6 +273,8 @@
                 <ul>
                     <li><a href="/health"><code>GET /health</code></a> - Server status, RPC connection, and cache information</li>
                     <li><a href="/verussupply"><code>GET /verussupply</code></a> - Verus Supply</li>
+                    <li><a href="/converters"><code>GET /converters</code></a> - Multi-chain converter discovery</li>
+                    <li><a href="/stats"><code>GET /stats</code></a> - Market statistics dashboard (HTML)</li>
                 </ul>
 
                 <h3>⚡ Cached Endpoints (60s TTL)</h3>
@@ -432,7 +434,7 @@
                 <p><strong>Liquidity Calculation:</strong> Pool liquidity × currency weight (typically 25% for 4-currency pools)</p>
                 <p><strong>Symbol Source:</strong> Uses Ethereum-standardized symbols from <code>currency_contract_mapping.eth_symbol</code></p>
                 <p><strong>Price Source:</strong> Direct from converter state data with volume-weighted calculations</p>
-                <div class="code">curl {{ base_url }}/coingecko</div>
+                <div class="code">curl {{base_url}}/coingecko</div>
             </div>
 
             <div class="tech-detail">
@@ -443,7 +445,7 @@
                 <p><strong>Price Aggregation:</strong> Volume-weighted average pricing across all instances</p>
                 <p><strong>Symbol Source:</strong> Uses Ethereum-standardized symbols from <code>currency_contract_mapping.eth_symbol</code></p>
                 <p><strong>Contract Integration:</strong> Uses ERC20 contract addresses for base_id/quote_id fields</p>
-                <div class="code">curl {{ base_url }}/coinmarketcap</div>
+                <div class="code">curl {{base_url}}/coinmarketcap</div>
             </div>
 
             <div class="tech-detail">
@@ -454,7 +456,7 @@
                 <p><strong>Data Structure:</strong> Array of ticker objects with symbol, volume, last, high, low, open fields</p>
                 <p><strong>Exclusion Logic:</strong> Filters converter currencies and excluded chains</p>
                 <p><strong>Price Fallback:</strong> When <code>last_price = 0</code>, uses <code>(high + low) / 2</code> calculation</p>
-                <div class="code">curl {{ base_url }}/coinpaprika</div>
+                <div class="code">curl {{base_url}}/coinpaprika</div>
             </div>
 
             <div class="tech-detail">
@@ -466,7 +468,7 @@
                 <p><strong>Symbol Source:</strong> Uses Verus native currency names from <code>currency_contract_mapping.vrsc_symbol</code></p>
                 <p><strong>Format Structure:</strong> CoinMarketCap DEX API compatible with sequential keys ("0", "1", "2", etc.)</p>
                 <p><strong>Use Case:</strong> Testing and validation of Verus native identifier integrations</p>
-                <div class="code">curl {{ base_url }}/coinmarketcap_iaddress</div>
+                <div class="code">curl {{base_url}}/coinmarketcap_iaddress</div>
             </div>
 
 
@@ -708,8 +710,8 @@ CHIPS_MIN_NATIVE_TOKENS=20000</div>
                 </table>
 
                 <p><strong>Usage:</strong></p>
-                <div class="code">curl {{ base_url }}/coinmarketcap  # ERC20 contract addresses</div>
-                <div class="code">curl {{ base_url }}/coinmarketcap_iaddress  # Verus i-addresses</div>
+                <div class="code">curl {{base_url}}/coinmarketcap  # ERC20 contract addresses</div>
+                <div class="code">curl {{base_url}}/coinmarketcap_iaddress  # Verus i-addresses</div>
             </div>
 
             <h3>📊 Aggregation Logic and Methodologies</h3>
@@ -770,7 +772,7 @@ CHIPS_MIN_NATIVE_TOKENS=20000</div>
                 <h4>📊 Price Aggregation Method</h4>
                 <p><strong>Quote Volume Weighting:</strong> When the same trading pair exists across multiple converters, the final <code>last_price</code> is calculated using volume-weighted averaging with <strong>quote volume</strong> as the weight. This ensures that higher dollar-value trades have more influence on the final price.</p>
                 <p><strong>Formula:</strong> <code>weighted_price = (price1 × quote_vol1 + price2 × quote_vol2) / (quote_vol1 + quote_vol2)</code></p>
-                <p><strong>Applied to:</strong> /coinmarketcap, /coinmarketcap_iaddress, /coinpaprika</p>
+                <p><strong>Applied to:</strong> /coinmarketcap, /coinmarketcap_cache, /coinmarketcap_iaddress, /coinmarketcap_iaddress_cache, /coinpaprika, /coinpaprika_cache</p>
             </div>
 
 
