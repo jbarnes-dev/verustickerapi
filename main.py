@@ -132,7 +132,7 @@ async def health_and_cache_status():
             "cache_status": cache_info,
             "endpoints": {
                 "cached": [
-                    "/coingecko",
+                    "/coingecko/tickers",
                     "/coinmarketcap",
                     "/coinpaprika",
                     "/coinmarketcap_iaddress"
