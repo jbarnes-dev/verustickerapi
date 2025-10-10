@@ -279,7 +279,7 @@
 
                 <h3>⚡ Cached Endpoints (60s TTL)</h3>
                 <ul>
-                    <li><a href="/coingecko"><code>GET /coingecko</code></a> - CoinGecko cached</li>
+                    <li><a href="/coingecko/tickers"><code>GET /coingecko/tickers</code></a> - CoinGecko cached</li>
                     <li><a href="/coinmarketcap"><code>GET /coinmarketcap</code></a> - CoinMarketCap cached</li>
                     <li><a href="/coinpaprika"><code>GET /coinpaprika</code></a> - Coinpaprika cached</li>
                     <li><a href="/coinmarketcap_iaddress"><code>GET /coinmarketcap_iaddress</code></a> - CMC I-Address cached</li>
@@ -434,7 +434,7 @@
                 <p><strong>Liquidity Calculation:</strong> Pool liquidity × currency weight (typically 25% for 4-currency pools)</p>
                 <p><strong>Symbol Source:</strong> Uses Ethereum-standardized symbols from <code>currency_contract_mapping.eth_symbol</code></p>
                 <p><strong>Price Source:</strong> Direct from converter state data with volume-weighted calculations</p>
-                <div class="code">curl {{base_url}}/coingecko</div>
+                <div class="code">curl {{base_url}}/coingecko/tickers</div>
             </div>
 
             <div class="tech-detail">
