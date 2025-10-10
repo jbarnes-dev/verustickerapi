@@ -132,7 +132,7 @@ async def health_and_cache_status():
             "cache_status": cache_info,
             "endpoints": {
                 "cached": [
-                    "/coingecko",
+                    "/coingecko/tickers",
                     "/coinmarketcap",
                     "/coinpaprika",
                     "/coinmarketcap_iaddress"
@@ -354,7 +354,7 @@ else:
                 "error": "Live endpoints are disabled",
                 "message": "This endpoint makes fresh RPC calls and is disabled for production use",
                 "alternatives": {
-                    "cached_endpoint": "/coingecko",
+                    "cached_endpoint": "/coingecko/tickers",
                     "description": "Use the cached version for production - 60x faster response times"
                 },
                 "enable_instructions": "Set ENABLE_LIVE_ENDPOINTS=true in .env file to enable live endpoints"
@@ -439,7 +439,7 @@ def kill_process_on_port(port):
 # CACHED ENDPOINTS - Performance optimized versions with unified caching
 # ============================================================================
 
-@app.get("/coingecko")
+@app.get("/coingecko/tickers")
 async def get_coingecko_tickers_cached():
     """
     Get all tickers in CoinGecko format (CACHED VERSION)
@@ -862,7 +862,7 @@ async def clear_cache_endpoint():
 @app.get("/stats", response_class=HTMLResponse)
 async def get_stats():
     """
-    Stats endpoint with ERC20 formatting applied (like /coingecko endpoint)
+    Stats endpoint with ERC20 formatting applied (like /coingecko/tickers endpoint)
     Returns HTML page with ERC20 symbols for exported currencies
     """
     try:
