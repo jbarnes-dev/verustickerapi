@@ -256,7 +256,7 @@ def generate_coinpaprika_tickers(pairs_data: List[Dict], use_cache: bool = False
             
             base_volume = float(pair_data.get('base_volume', 0))
             target_volume = float(pair_data.get('target_volume', 0))
-            last_price = float(pair_data.get('last_price', 0))
+            last_price = float(pair_data.get('last', 0))
             high_price = float(pair_data.get('high', 0))
             low_price = float(pair_data.get('low', 0))
             
