@@ -219,7 +219,7 @@ async def get_converters(chain: str = None):
                 chains = ["VRSC", "CHIPS", "VARRR", "VDEX"]
             
             # Discover converters
-            result = discover_active_converters(chains=chains)
+            result = discover_active_converters(chains=chains, save_results=False)
             
             if 'error' in result:
                 logger.error(f"Converter discovery failed: {result['error']}")

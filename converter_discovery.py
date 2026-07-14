@@ -311,7 +311,7 @@ def extract_converter_info(converter):
     
     return info
 
-def discover_active_converters(chains=None):
+def discover_active_converters(chains=None, save_results=True):
     """
     Main function to discover all active converters across multiple chains
     
@@ -419,14 +419,13 @@ def discover_active_converters(chains=None):
     for chain, chain_data in chain_results.items():
         print(f"   {chain}: {chain_data['count']} converters")
     
-    # Automatically save the results to JSON file
-    save_success = save_converter_discovery(result)
-    if save_success:
-        print(f"💾 Results saved to converter_discovery.json")
-    else:
-        print(f"❌ Failed to save results to converter_discovery.json")
-    
-    return result
+    # Automatically save the results to JSON file (skipped for read-only callers)
+    if save_results:
+        save_success = save_converter_discovery(result)
+        if save_success:
+            print(f"💾 Results saved to converter_discovery.json")
+        else:
+            print(f"❌ Failed to save results to converter_discovery.json")
 
 def save_converter_discovery(discovery_result, filename=None):
     """
