@@ -339,6 +339,7 @@ def discover_active_converters(chains=None, save_results=True):
     
     all_raw_converters = []
     chain_results = {}
+    any_chain_failed = False
     
     # Discover converters on each chain
     for chain in chains:
@@ -363,6 +364,8 @@ def discover_active_converters(chains=None, save_results=True):
             }
             print(f"✅ Found {len(raw_converters)} converters on {chain}, kept {len(filtered_converters)} after bridge filtering")
         else:
+            if raw_converters is None:
+                any_chain_failed=True
             chain_results[chain] = {
                 'count': 0,
                 'converters': [],
@@ -420,7 +423,7 @@ def discover_active_converters(chains=None, save_results=True):
         print(f"   {chain}: {chain_data['count']} converters")
     
     # Automatically save the results to JSON file (skipped for read-only callers)
-    if save_results:
+    if save_results and not any_chain_failed:
         save_success = save_converter_discovery(result)
         if save_success:
             print(f"💾 Results saved to converter_discovery.json")
