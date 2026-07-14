@@ -178,9 +178,11 @@ async def health_and_cache_status():
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """Verus Ticker API Documentation - Complete Endpoint Reference"""
-    with open('templates/index.html', 'r') as f:
-        f = f.readlines()
-    html_content = ''.join(f).replace("{{base_url}}", os.environ['BASE_URL'])
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'templates', 'index.html')
+    with open(template_path, 'r') as f:
+        html_content = f.read()
+    html_content = html_content.replace("{{base_url}}", os.getenv('BASE_URL', ''))
     return HTMLResponse(content=html_content)
 
 # API v1 router placeholder (unused endpoint removed)
