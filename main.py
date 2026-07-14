@@ -73,7 +73,7 @@ app.add_middleware(
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global exception on {request.url}: {str(exc)}")
-    return JSONResponse(
+    return BaseJSONResponse(
         status_code=500,
         content={
             "error": "Internal server error",
