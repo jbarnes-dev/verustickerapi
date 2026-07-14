@@ -805,72 +805,72 @@ async def get_coinmarketcap_iaddress():
         )
 
 
-@app.get("/validate")
-async def validate_endpoints():
-    """
-    Comprehensive API Endpoint Validation
-    ====================================
-    
-    Runs automated validation checks on all API endpoints:
-    1. Scientific notation detection
-    2. Pair count validation 
-    3. Cached vs non-cached endpoint matching
-    4. Volume aggregation verification
-    5. Data consistency checks
-    
-    Returns:
-        JSON response with detailed validation results
-    """
-    try:
-        from validation_endpoint import run_validation
-        
-        logger.info("🔍 API Validation endpoint called")
-        
-        # Run comprehensive validation
-        validation_results = run_validation()
-        
-        # Custom JSON serialization to prevent scientific notation
-        def decimal_serializer(obj):
-            if isinstance(obj, float):
-                return f"{obj:.8f}"
-            return obj
-            
-        pretty_json = json.dumps(
-            validation_results, 
-            indent=2, 
-            ensure_ascii=False,
-            default=decimal_serializer
-        )
-        
-        # Log validation summary
-        overall_status = validation_results.get("overall_status", "UNKNOWN")
-        logger.info(f"✅ Validation complete. Overall status: {overall_status}")
-        
-        return Response(
-            content=pretty_json,
-            media_type="application/json",
-            headers={"Content-Type": "application/json; charset=utf-8"}
-        )
-        
-    except Exception as e:
-        import traceback
-        logger.error(f"❌ Error in validation endpoint: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        
-        error_response = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "error": "Internal server error",
-            "validation_summary": {
-                "overall_status": "ERROR"
-            },
-            "message": "Validation endpoint encountered an error"
-        }
-        error_json = json.dumps(error_response, indent=2)
-        return Response(
-            content=error_json,
-            media_type="application/json",
-            headers={"Content-Type": "application/json; charset=utf-8"}
-        )
+#@app.get("/validate")
+#async def validate_endpoints():
+#    """
+#    Comprehensive API Endpoint Validation
+#    ====================================
+#    
+#    Runs automated validation checks on all API endpoints:
+#    1. Scientific notation detection
+#    2. Pair count validation 
+#    3. Cached vs non-cached endpoint matching
+#    4. Volume aggregation verification
+#    5. Data consistency checks
+#    
+#    Returns:
+#        JSON response with detailed validation results
+#    """
+#    try:
+#        from validation_endpoint import run_validation
+#        
+#        logger.info("🔍 API Validation endpoint called")
+#        
+#        # Run comprehensive validation
+#        validation_results = run_validation()
+#        
+#        # Custom JSON serialization to prevent scientific notation
+#        def decimal_serializer(obj):
+#            if isinstance(obj, float):
+#                return f"{obj:.8f}"
+#            return obj
+#            
+#        pretty_json = json.dumps(
+#            validation_results, 
+#            indent=2, 
+#            ensure_ascii=False,
+#            default=decimal_serializer
+#        )
+#        
+#        # Log validation summary
+#        overall_status = validation_results.get("overall_status", "UNKNOWN")
+#        logger.info(f"✅ Validation complete. Overall status: {overall_status}")
+#        
+#        return Response(
+#            content=pretty_json,
+#            media_type="application/json",
+#            headers={"Content-Type": "application/json; charset=utf-8"}
+#        )
+#        
+#    except Exception as e:
+#        import traceback
+#        logger.error(f"❌ Error in validation endpoint: {str(e)}")
+#        logger.error(f"Traceback: {traceback.format_exc()}")
+#        
+#        error_response = {
+#            "timestamp": datetime.utcnow().isoformat() + "Z",
+#            "error": "Internal server error",
+#            "validation_summary": {
+#                "overall_status": "ERROR"
+#            },
+#            "message": "Validation endpoint encountered an error"
+#        }
+#        error_json = json.dumps(error_response, indent=2)
+#        return Response(
+#            content=error_json,
+#            media_type="application/json",
+#            headers={"Content-Type": "application/json; charset=utf-8"}
+#        )
 
 @app.post("/cache_clear")
 async def clear_cache_endpoint(request: Request):
@@ -896,10 +896,11 @@ async def clear_cache_endpoint(request: Request):
             status_code=401
         )
     try:
-        from ticker_formatting_cached import clear_cache
+        from cache_manager import invalidate_cache
 
-        result = clear_cache()
-        
+        invalidate_cache()
+        result = {"status" : "ok", "message" : "Cache cleared; next refresh will fetch fresh data"}
+
         pretty_json = json.dumps(result, indent=2, ensure_ascii=False)
         
         return Response(
